@@ -6,13 +6,13 @@ module Main where
 	import Data.Text.Lazy.Encoding
 	import GHC.Int
 
-	subreddits = ["worldpolitics"]
-	candidates = ["sanders", "clinton", "trump"]
+	subreddits = ["worldpolitics", "worldnews", "politics"]
+	queries = ["sanders", "clinton", "trump"]
 
 	main = 
 		do
 			ioXML <- mapM getRSS subreddits
-			let results = [(c, sum $ map (countOccurances c) ioXML) | c <- candidates]
+			let results = [(q, sum $ map (countOccurances q) ioXML) | q <- queries]
 			print results
 
 	-- prettify [] = []
