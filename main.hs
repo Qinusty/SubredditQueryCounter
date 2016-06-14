@@ -6,12 +6,11 @@ module Main where
 	import Data.Text.Lazy.Encoding
 	import GHC.Int
 
-	subreddits = ["worldnews", "politics", "worldpolitics"]
-	candidates = ["Sanders", "Clinton", "Trump"]
+	subreddits = ["worldpolitics"]
+	candidates = ["sanders", "clinton", "trump"]
 
 	main = 
 		do
-			-- print $ prettify results
 			ioXML <- mapM getRSS subreddits
 			let results = [(c, sum $ map (countOccurances c) ioXML) | c <- candidates]
 			print results
@@ -26,4 +25,4 @@ module Main where
 	countOccurances string xml = LT.count (LT.pack string) textXML
 		where 
 			response = respBody xml
-			textXML = decodeUtf8 response
+			textXML = LT.toLower $ decodeUtf8 response
