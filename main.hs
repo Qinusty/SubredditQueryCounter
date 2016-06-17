@@ -1,28 +1,37 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-	import Network.HTTP.Dispatch.Core
-	import qualified Data.Text.Lazy as LT
-	import Data.Text.Lazy.Encoding
-	import GHC.Int
+    import Network.HTTP.Dispatch.Core
+    import qualified Data.Text.Lazy as LT
+    import Data.Text.Lazy.Encoding
+    import GHC.Int
+    import Data.List (sortBy)
 
-	subreddits = ["worldpolitics", "worldnews", "politics"]
-	queries = ["sanders", "clinton", "trump"]
+    subreddits = ["worldpolitics", "worldnews", "politics"]
+    queries = ["Sanders", "Clinton", "Trump"]
 
-	main = 
-		do
-			ioXML <- mapM getRSS subreddits
-			let results = [(q, sum $ map (countOccurances q) ioXML) | q <- queries]
-			print results
+    type Result = (String, Int64)
 
-	-- prettify [] = []
-	-- prettify results = (show $ fst $ head results) ++ ": " ++ (show $ snd $ head results) ++ "\n" ++ prettify $ tail results 
+    main = 
+        do
+            ioXML <- mapM getRSS subreddits
+            let results = [(q, sum $ map (countOccurances q) ioXML) | q <- queries]
+            putStrLn $ prettify results
 
-	getRSS :: String -> IO HTTPResponse
-	getRSS subreddit = runRequest $ get ("http://www.reddit.com/r/" ++ subreddit ++ ".rss")
+    prettify :: [Result] -> String
+    prettify results = stringify $ sortBy order results
+            where
+                stringify :: [Result] -> String
+                stringify [] = []
+                stringify ts = ((fst $ head ts) ++ ": " ++ (show $ snd $ head ts)) ++
+                               '\n' : (stringify $ tail ts)
+                order = (\(_,a) (_,b) -> if a < b then GT else LT)
 
-	countOccurances :: String -> HTTPResponse -> Int64
-	countOccurances string xml = LT.count (LT.pack string) textXML
-		where 
-			response = respBody xml
-			textXML = LT.toLower $ decodeUtf8 response
+    getRSS :: String -> IO HTTPResponse
+    getRSS subreddit = runRequest $ get ("http://www.reddit.com/r/" ++ subreddit ++ ".rss")
+
+    countOccurances :: String -> HTTPResponse -> Int64
+    countOccurances string xml = LT.count (LT.toLower $ LT.pack string) textXML
+        where 
+            response = respBody xml
+            textXML = LT.toLower $ decodeUtf8 response
